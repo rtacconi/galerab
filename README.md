@@ -4,7 +4,7 @@ Load balancer for MySql clusters using Galera replication
 ## Installation
 
 `
-gem install em-proxy --no-ri --no-rdoc
+gem install em-proxy
 gem install ansi --no-ri --no-rdoc
 gem install mysql --no-ri --no-rdoc
 gem install sequel --no-ri --no-rdoc
