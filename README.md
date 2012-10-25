@@ -1,18 +1,24 @@
-GALERAD - Load balancer for MySql clusters using Galera replication
-===================================================================
+GALERAD
+=======
+Load balancer for MySql clusters using Galera replication
 
 Installation
 ------------
-install the dependencies:
-
 gem install em-proxy --no-ri --no-rdoc
 gem install ansi --no-ri --no-rdoc
 gem install mysql --no-ri --no-rdoc
 gem install sequel --no-ri --no-rdoc
+cp balancer /usr/sbin 
+chmod +x /usr/sbin/balancer
+cp galerb /etc/init.d/
+chmod 755 /etc/init.d/galerab
+cp galerab.yml /etc/
+update-rc.d /etc/init.d/galerab defaults
 
-Copy balancer to /usr/sbin and chmod to +x. The copy galerb to /etc/init.d/ and run:
+This installation is for Debian-like systems to link the script to the system levels.
 
-chmod 755 galerab
-update-rc.d galerab defaults
+Usage
+-----
 
-on Debian-like systems to link the script to the system levels.
+service galerab start
+service galerab stop

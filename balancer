@@ -8,23 +8,7 @@ require 'sequel'
 require 'em-proxy'
 require 'ansi/code'
 
-# = Balancing Proxy
-#
-# A simple example of a balancing, reverse/forward proxy such as Nginx or HAProxy.
-#
-# Given a list of backends, it's able to distribute requests to backends
-# via different strategies (_random_, _roundrobin_, _balanced_), see <tt>Backend.select</tt>.
-#
-# This example is provided for didactic purposes. Nevertheless, based on some preliminary benchmarks
-# and live tests, it performs well in production usage.
-#
-# You can customize the behaviour of the proxy by changing the <tt>BalancingProxy::Callbacks</tt>
-# callbacks. To give you some ideas:
-#
-# * Store statistics for the proxy load in Redis (eg.: <tt>$redis.incr "proxy>backends>#{backend}>total"</tt>)
-# * Use Redis' _SortedSet_ instead of updating the <tt>Backend.list</tt> hash to allow for polling from external process
-# * Use <b>em-websocket</b>[https://github.com/igrigorik/em-websocket] to build a web frontend for monitoring
-#
+# Balancing Proxy
 module BalancingProxy
   extend self
 
@@ -102,7 +86,7 @@ end
 class Backend
   attr_accessor :not_ready
   
-  @@conf = YAML.load_file('config.yml')
+  @@conf = YAML.load_file('/etc/galerab.yml')
   @@list = @@conf["backends"]
   @@not_ready = []
 

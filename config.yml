@@ -1,7 +1,0 @@
-backends: ["127.0.0.1"]
-check_every: 10
-user: your_user
-password: your_password
-database: your_db
-balancer_port: 3307
-backend_port: 3306
