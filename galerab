@@ -1,0 +1,19 @@
+#! /bin/sh
+
+# Carry out specific functions when asked to by the system
+case "$1" in
+  start)
+    echo "Starting script galerab "
+    nohup /usr/sbin/balancer </dev/null   >/dev/null 2>&1 &
+    ;;
+  stop)
+    echo "Stopping script galerab"
+    kill `ps -ef | grep balancer | grep -v grep | awk '{print $2}'`    
+    ;;
+  *)
+    echo "Usage: /etc/init.d/galerab {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0

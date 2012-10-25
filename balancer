@@ -1,0 +1,146 @@
+#!/usr/bin/env ruby
+
+require "rubygems"
+require "thread"
+require 'yaml'
+require 'mysql'
+require 'sequel'
+require 'em-proxy'
+require 'ansi/code'
+
+# = Balancing Proxy
+#
+# A simple example of a balancing, reverse/forward proxy such as Nginx or HAProxy.
+#
+# Given a list of backends, it's able to distribute requests to backends
+# via different strategies (_random_, _roundrobin_, _balanced_), see <tt>Backend.select</tt>.
+#
+# This example is provided for didactic purposes. Nevertheless, based on some preliminary benchmarks
+# and live tests, it performs well in production usage.
+#
+# You can customize the behaviour of the proxy by changing the <tt>BalancingProxy::Callbacks</tt>
+# callbacks. To give you some ideas:
+#
+# * Store statistics for the proxy load in Redis (eg.: <tt>$redis.incr "proxy>backends>#{backend}>total"</tt>)
+# * Use Redis' _SortedSet_ instead of updating the <tt>Backend.list</tt> hash to allow for polling from external process
+# * Use <b>em-websocket</b>[https://github.com/igrigorik/em-websocket] to build a web frontend for monitoring
+#
+module BalancingProxy
+  extend self
+
+  # Callbacks for em-proxy events
+  #
+  module Callbacks
+    include ANSI::Code
+    extend  self
+
+    def on_select
+      lambda do |backend|
+        puts black_on_white { 'on_select'.ljust(12) } + " #{backend.inspect}"
+        backend.increment_counter if Backend.strategy == :balanced
+      end
+    end
+
+    def on_connect
+      lambda do |backend|
+        puts black_on_magenta { 'on_connect'.ljust(12) } + ' ' + bold { backend }
+      end
+    end
+    
+    def on_data
+      lambda do |data|
+        puts black_on_yellow { 'on_data'.ljust(12) }, data
+        data
+      end
+    end
+
+    def on_response
+      lambda do |backend, resp|
+        puts black_on_green { 'on_response'.ljust(12) } + " from #{backend}", resp
+        resp
+      end
+    end
+
+    def on_finish
+      lambda do |backend|
+        puts black_on_cyan { 'on_finish'.ljust(12) } + " for #{backend}", ''
+      end
+    end
+
+  end
+  
+  module Server
+    def run(backend)
+      # run the proxy server and wait for connections
+      balancer_port = backend.conf["balancer_port"]
+      backend_port = backend.conf["backend_port"]
+      puts ANSI::Code.bold { "Launching proxy at 0.0.0.0:#{balancer_port}...\n" }
+
+      Proxy.start(:host => '0.0.0.0', :port => balancer_port, :debug => false) do |conn|
+        backend_host = backend.get_next
+        conn.server backend_host, :host => backend_host, :port => backend_port
+        puts ANSI::Code.bold { "Farwarding to #{backend_host}\n" }
+
+        conn.on_connect  &Callbacks.on_connect
+        conn.on_data     &Callbacks.on_data
+        conn.on_response &Callbacks.on_response
+        conn.on_finish   &Callbacks.on_finish
+      end
+    end
+
+    module_function :run
+  end
+end
+
+class Proxy
+  def self.stop
+    puts "Terminating ProxyServer"
+    EventMachine.stop
+  end
+end
+
+class Backend
+  attr_accessor :not_ready
+  
+  @@conf = YAML.load_file('config.yml')
+  @@list = @@conf["backends"]
+  @@not_ready = []
+
+  def conf
+    @@conf
+  end
+
+  def initialize
+    @next_host = 0
+  end
+
+  def get_next
+    @next_host = @next_host + 1
+    @next_host = 0 if @next_host >= @@list.size
+    @@list[@next_host]
+  end
+end
+
+backend = Backend.new
+
+Thread.new do
+  while true
+    # Here we check if the backend is ready
+    next_backend = backend.get_next
+    puts "Checking if the backend is ready (wsrep_ready = ON)"
+
+    Sequel.connect(
+      "mysql://#{backend.conf["user"]}:#{backend.conf["password"]}@#{next_backend}/#{backend.conf["database"]}"
+    ).fetch("show status like 'wsrep_ready'") do |row|
+      if row[:Value] == "OFF"
+        backend.not_ready.push(next_backend) unless backend.not_ready.include?(next_backend)
+      elsif row[:Value] == "ON"
+        backend.not_ready.delete(next_backend)
+      end
+    end
+
+    sleep backend.conf["check_every"]
+  end
+end
+
+BalancingProxy::Server.run(backend)
