@@ -16,3 +16,11 @@ This installation is for Debian-like systems to link the script to the system le
 service galerab start
 service galerab stop
 ```
+
+# Testing
+
+To run rspec:
+
+```bash
+rake
+```
