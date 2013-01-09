@@ -12,5 +12,7 @@ This installation is for Debian-like systems to link the script to the system le
 
 # Usage
 
+```bash
 service galerab start
 service galerab stop
+```
