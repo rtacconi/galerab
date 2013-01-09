@@ -1,8 +1,8 @@
-require "#{File.dirname(__FILE__)}/../require.rb"
+require 'spec_helper'
 
 describe Configuration do
   before(:each) do
-    @conf = Configuration.new(File.dirname(__FILE__) + '/galerab.yml').conf
+    @conf = Configuration.new(ENV['GALERAB_CONFIG_PATH']).conf
   end
   
   context "when loading the file" do
@@ -34,7 +34,7 @@ end
 
 describe Backend do
   before(:each) do
-    @conf = Configuration.new(File.dirname(__FILE__) + '/galerab.yml').conf.first
+    @conf = Configuration.new(ENV['GALERAB_CONFIG_PATH']).conf.first
     @backend = Backend.new(@conf[1])
   end
   

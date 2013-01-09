@@ -1,13 +1,17 @@
 #!/usr/bin/env ruby
 
-require './require'
+require 'galerab'
 
 path = ARGV.include?('-c') && ARGV[ARGV.index('-c') + 1]
 
 unless path
-  puts "Missing port number"
-  puts "Usage: command -c /absolute/path/file.yml"
-  abort
+  path = ENV['GALERAB_CONFIG_PATH']
+  
+  unless path
+    puts "Missing path for configuration file"
+    puts "Usage: command -c path/file.yml"
+    abort
+  end
 end
 
 
