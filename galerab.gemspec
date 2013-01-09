@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name                       = 'galerab'
-  spec.version                    = '0.0.1'
+  spec.version                    = '0.0.2'
   spec.date                       = '2013-01-09'
   spec.summary                    = "Load balancer for galera cluster"
   spec.description                = "This load balancer is a transparent proxy to route r/w requests to MySql backends"
