@@ -4,17 +4,17 @@
 case "$1" in
   start)
     echo "Starting script galerab "
-    nohup /usr/sbin/balancer </dev/null   >/dev/null 2>&1 &
+    nohup galerab </dev/null   >/dev/null 2>&1 &
     ;;
   stop)
     echo "Stopping script galerab"
-    kill `ps -ef | grep balancer | grep -v grep | awk '{print $2}'`
+    kill `ps -ef | grep galerab | grep -v grep | awk '{print $2}'`
   reload)
     echo "reloading script galerab"
-    kill -s SIGHUP `ps -ef | grep balancer | grep -v grep | awk '{print $2}'`
+    kill -s SIGHUP `ps -ef | grep galerab | grep -v grep | awk '{print $2}'`
     ;;
   *)
-    echo "Usage: /etc/init.d/galerab {start|stop}"
+    echo "Usage: /etc/init.d/galerab {start|stop|reload}"
     exit 1
     ;;
 esac

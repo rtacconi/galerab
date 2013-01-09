@@ -7,9 +7,9 @@ task :default => :spec
 
 namespace :install do
   task :debian do
-    `cp files/galerab /etc/init.d/`
-    `chmod 755 /etc/init.d/galerab`
+    `cp files/galerabd /etc/init.d/`
+    `chmod 755 /etc/init.d/galerabd`
     `cp files/galerab.yml /etc/`
-    `update-rc.d /etc/init.d/galerab defaults`
+    `update-rc.d /etc/init.d/galerabd defaults`
   end
 end
