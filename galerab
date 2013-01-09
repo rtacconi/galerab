@@ -8,7 +8,10 @@ case "$1" in
     ;;
   stop)
     echo "Stopping script galerab"
-    kill `ps -ef | grep balancer | grep -v grep | awk '{print $2}'`    
+    kill `ps -ef | grep balancer | grep -v grep | awk '{print $2}'`
+  reload)
+    echo "reloading script galerab"
+    kill -s SIGHUP `ps -ef | grep balancer | grep -v grep | awk '{print $2}'`
     ;;
   *)
     echo "Usage: /etc/init.d/galerab {start|stop}"

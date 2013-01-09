@@ -1,0 +1,17 @@
+1:
+  backends: ["192.168.10.101", "192.168.10.102", "192.168.10.103"]
+  check_every: 10
+  user: your_user
+  password: your_password
+  database: your_db
+  balancer_port: 3307
+  backend_port: 3306
+
+2:
+  backends: ["192.168.11.101", "192.168.11.102", "192.168.11.103"]
+  check_every: 10
+  user: your_user
+  password: your_password
+  database: your_db
+  balancer_port: 3308
+  backend_port: 3306
