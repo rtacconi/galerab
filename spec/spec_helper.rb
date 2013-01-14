@@ -1,5 +1,5 @@
 require 'rspec'
-ENV['GALERAB_CONFIG_PATH'] = File.dirname(__FILE__) + '/galerab.yml'
+ENV['GALERAB_CONFIG_PATH'] = File.dirname(__FILE__)
 require 'galerab'
 
 RSpec.configure do |config|

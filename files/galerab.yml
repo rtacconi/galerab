@@ -1,17 +1,7 @@
-1:
-  backends: ["localhost"]
-  check_every: 10
-  user: root
-  password: root
-  database: mysql
-  balancer_port: 3307
-  backend_port: 3306
-
-2:
-  backends: ["192.168.1.11"]
-  check_every: 10
-  user: root
-  password: root
-  database: mysql
-  balancer_port: 3308
-  backend_port: 3306
+backends: ["192.168.2.11"]
+check_every: 3
+user: root
+password: root
+database: mysql
+balancer_port: 3308
+backend_port: 3306

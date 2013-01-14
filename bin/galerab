@@ -16,44 +16,42 @@ end
 
 
 puts "[#{Process.pid}] galerab starting with config file at #{ARGV[1]}"
+configuration = Configuration.new(path)
+conf = configuration.conf
+backend = Backend.new(conf)
 
-confs = Configuration.new(path).conf
+balancer = fork { BalancingProxy::Server.run(backend) }
 
-confs.each do |conf|
-  backend = Backend.new(conf[1])
-  conf = conf[1]
-  
-  fork do
-    t = Thread.new do
-      while true
-        # Here we check if the backend is ready
-        next_backend = backend.get_next
-        puts "\nChecking if (wsrep_ready == ON) #{next_backend}\n"
-        
-        begin
-          Sequel.connect(
-            "mysql://#{conf["user"]}:#{conf["password"]}@#{next_backend}/#{conf["database"]}"
-          ).fetch("show status like 'wsrep_ready'") do |row|
-            #row[:Value] = "OFF"
-            if row[:Value] == "OFF"
-              puts "#{next_backend} is not ready"
-              backend.not_ready.push(next_backend) unless backend.not_ready.include?(next_backend)
-            elsif row[:Value] == "ON"
-              puts "#{next_backend} is ready"
-              backend.not_ready.delete(next_backend) if backend.not_ready
-            end
+checker = fork do
+  while true
+    # Here we check if the backend is ready
+    next_backend = backend.get_next
+    puts "\nChecking if (wsrep_ready == ON) #{next_backend}\n"
+    
+    if next_backend
+      begin
+        connection = Sequel.connect(
+          "mysql://#{conf["user"]}:#{conf["password"]}@#{next_backend}/#{conf["database"]}"
+        ).fetch("show status like 'wsrep_ready'") do |row|
+
+          if row[:Value] == "OFF"
+            puts "#{next_backend} is not ready"
+            configuration.remove_backend(next_backend)
+            Process.kill(:SIGHUP, balancer)
+          elsif row[:Value] == "ON"
+            puts "#{next_backend} is ready"
+            configuration.add_backend(next_backend)
+            Process.kill(:SIGHUP, balancer)
           end
-        rescue
-          puts "#{next_backend} is not ready"
-          backend.not_ready.push(next_backend) unless backend.not_ready.include?(next_backend)
         end
-
-        sleep conf["check_every"]
+      rescue Exception => msg
+        puts "#{next_backend} is not ready #{msg}"
+        configuration.remove_backend(next_backend)
+        Process.kill(:SIGHUP, balancer)
       end
     end
     
-    t.join
-    BalancingProxy::Server.run(backend)
+    sleep conf["check_every"]
   end
 end
 
@@ -63,5 +61,6 @@ trap (:SIGHUP) do
   $stdout.puts backend.conf["balancer_ports"].inspect
 end
 
-# release child processes before exit
-confs.each { |conf| Process.wait }
+Process.waitpid2(checker)
+Process.waitpid2(balancer)
+#connection = Sequel.connect("mysql://root:root@192.168.2.11/mysql").fetch("show status like 'wsrep_ready'") {puts row[:Value]}
